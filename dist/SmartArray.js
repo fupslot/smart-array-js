@@ -17,61 +17,55 @@
 */
 ;(function(window, document, undefined) {
     
-    function FunnelSmartCollection (events) {
-        this._events = _.clone(events);
+    function FunnelSmartCollection (eventCount) {
+        this._eventCount = eventCount;
         this._sections = [];
-        // init.call(this);
     }
 
     FunnelSmartCollection.prototype = {
-        push: function (sectionName, eventName, actualValue, compareValue) {
-            var sectionIndex
-              , eventIndex;
+        push: function (stepId, sectionName, eventName, actualValue, compareValue) {
+            var isNewStep
+              , sectionIndex;
 
             actualValue  = _.isNumber(actualValue)  ? actualValue  : 0;
             compareValue = _.isNumber(compareValue) ? compareValue : 0;
 
             sectionIndex = _.pluck(this._sections, 'name').indexOf(sectionName);
-            eventIndex = this._getEventIdxByName(eventName);
 
-            if (eventIndex === -1) {
-                console.error('Error@FunnelSmartCollection. No '+eventName+' event was found in the collection.');
+            if (stepId > this._eventCount) {
+                console.error('Error@FunnelSmartCollection. The stepId is out of the range 0-'+this._eventCount);
                 return;
             }
 
             if (sectionIndex === -1) {
-                this._insertSection(sectionName, eventIndex, actualValue, compareValue);
+                this._insertSection(sectionName, stepId - 1, actualValue, compareValue);
             }
             else {
-                this._addToSection(sectionIndex, eventIndex, actualValue, compareValue);
+                this._addToSection(sectionIndex, stepId - 1, actualValue, compareValue);
             }
         },
 
-        _insertSection: function (sectionName, eventIndex, actual, compare) {
+        _insertSection: function (sectionName, stepId, actual, compare) {
             var section;
 
             section = {
                 name:    sectionName,
-                actual:  _.range(0, this._events.length, 0),
-                compare: _.range(0, this._events.length, 0)
+                actual:  _.range(0, this._eventCount, 0),
+                compare: _.range(0, this._eventCount, 0)
             };
 
-            section.actual[eventIndex]  = actual;
-            section.compare[eventIndex] = compare;
+            section.actual[stepId]  = actual;
+            section.compare[stepId] = compare;
 
             return this._sections.push(section) - 1;
         },
 
-        _addToSection: function (sectionIndex, eventIndex, actual, compare) {
+        _addToSection: function (sectionIndex, stepId, actual, compare) {
             var section;
 
             section = this._sections[sectionIndex];
-            section.actual[eventIndex]  = actual;
-            section.compare[eventIndex] = compare;
-        },
-
-        _getEventIdxByName: function (eventName) {
-            return _.indexOf(this._events, eventName);
+            section.actual[stepId]  = actual;
+            section.compare[stepId] = compare;
         },
 
         toCollection: function () {
